@@ -74,7 +74,7 @@ uint16_t crud_format(void) {
 	// Check if CRUD is initialized, if not, call CRUD_INIT
 	if(isInit == 0) {
 		CrudRequest initRequest = create_crud_request( 0, CRUD_INIT, 0, 0, 0 );
-		crud_bus_request( initRequest, NULL );
+		crud_client_operation( initRequest, NULL );
 		isInit = 1;
 	}
 	
@@ -83,7 +83,7 @@ uint16_t crud_format(void) {
 
 	// Format priority object
 	CrudRequest formatRequest = create_crud_request( 0, CRUD_FORMAT, 0, CRUD_NULL_FLAG, 0 );
-	CrudResponse formatResponse = crud_bus_request( formatRequest, NULL );
+	CrudResponse formatResponse = crud_client_operation( formatRequest, NULL );
 
 	struct GenResponse response;
 
@@ -107,7 +107,7 @@ uint16_t crud_format(void) {
 	// Place new table in object store
 	CrudRequest createRequest = create_crud_request( 0, CRUD_CREATE, sizeof(CrudFileAllocationType)*CRUD_MAX_TOTAL_FILES,
 			CRUD_PRIORITY_OBJECT, 0 );
-	CrudResponse createResponse = crud_bus_request( createRequest, tempBuff );
+	CrudResponse createResponse = crud_client_operation( createRequest, tempBuff );
 
 	// Check to make sure that the CRUD_CREATE succeeded
 	extract_crud_response( createResponse, &response.objectId, &response.request, &response.length, 
@@ -137,7 +137,7 @@ uint16_t crud_mount(void) {
 	// Check if CRUD is initialized, if not, call CRUD_INIT
 	if(isInit == 0) {
 		CrudRequest initRequest = create_crud_request( 0, CRUD_INIT, 0, 0, 0 );
-		crud_bus_request( initRequest, NULL );
+		crud_client_operation( initRequest, NULL );
 		isInit = 1;
 	}
 
@@ -147,7 +147,7 @@ uint16_t crud_mount(void) {
 	// Get table from priority object
 	CrudRequest pullRequest = create_crud_request( 0, CRUD_READ, sizeof(CrudFileAllocationType)*CRUD_MAX_TOTAL_FILES,
 			CRUD_PRIORITY_OBJECT, 0 );
-	CrudResponse pullResponse = crud_bus_request( pullRequest, tempBuff );
+	CrudResponse pullResponse = crud_client_operation( pullRequest, tempBuff );
 
 	struct GenResponse response;
 
@@ -187,7 +187,7 @@ uint16_t crud_unmount(void) {
 	// Create CRUD_UPDATE request to write to file
 	CrudRequest updateRequest = create_crud_request( 0, CRUD_UPDATE, sizeof(CrudFileAllocationType)*CRUD_MAX_TOTAL_FILES,
 			CRUD_PRIORITY_OBJECT, 0 );
-	CrudResponse updateResponse = crud_bus_request( updateRequest, tempBuff );
+	CrudResponse updateResponse = crud_client_operation( updateRequest, tempBuff );
 
 	struct GenResponse response;
 
@@ -200,7 +200,7 @@ uint16_t crud_unmount(void) {
 
 	// Create CRUD_CLOSE request to save to file
 	CrudRequest closeRequest = create_crud_request( 0, CRUD_CLOSE, 0, CRUD_NULL_FLAG, 0 );
-	CrudResponse closeResponse = crud_bus_request( closeRequest, NULL );
+	CrudResponse closeResponse = crud_client_operation( closeRequest, NULL );
 
 	// Check to make sure the CRUD_CLOSE succeeded and extract the values
 	extract_crud_response( closeResponse, &response.objectId, &response.request, &response.length,
@@ -242,7 +242,7 @@ int16_t crud_open(char *path) {
 
 	// Create CRUD_CREATE request and call it to make a object of 0 size
 	CrudRequest createRequest = create_crud_request( 0, CRUD_CREATE, 0, 0, 0 );
-	CrudResponse createResponse = crud_bus_request( createRequest, NULL );
+	CrudResponse createResponse = crud_client_operation( createRequest, NULL );
 	
 	struct GenResponse response;
 
@@ -296,7 +296,7 @@ int32_t crud_read(int16_t fd, void *buf, int32_t count) {
 
 	// Create CRUD_READ request and call it
 	CrudRequest readRequest = create_crud_request( crud_file_table[fd].object_id, CRUD_READ, crud_file_table[fd].length, 0, 0 );
-	CrudResponse readResponse = crud_bus_request( readRequest, tempBuffer );
+	CrudResponse readResponse = crud_client_operation( readRequest, tempBuffer );
 
 	struct GenResponse response;
 
@@ -348,7 +348,7 @@ int32_t crud_write(int16_t fd, void *buf, int32_t count) {
 
 	// Must first read file to prepare for write
 	CrudRequest readRequest = create_crud_request( crud_file_table[fd].object_id, CRUD_READ, crud_file_table[fd].length, 0, 0 );
-	CrudResponse readResponse = crud_bus_request( readRequest, readBuffer );
+	CrudResponse readResponse = crud_client_operation( readRequest, readBuffer );
 
 	struct GenResponse readResponseExtract;
 
@@ -365,7 +365,7 @@ int32_t crud_write(int16_t fd, void *buf, int32_t count) {
 			// Create CRUD_UPDATE request to write to file
 			CrudRequest updateRequest = create_crud_request( crud_file_table[fd].object_id, CRUD_UPDATE,
 					crud_file_table[fd].length, 0, 0 );
-			CrudResponse updateResponse = crud_bus_request( updateRequest, tempBuffer );
+			CrudResponse updateResponse = crud_client_operation( updateRequest, tempBuffer );
 
 			struct GenResponse updateResponseExtract;
 
@@ -392,7 +392,7 @@ int32_t crud_write(int16_t fd, void *buf, int32_t count) {
 			memcpy(tempBuffer, readBuffer, (crud_file_table[fd].position + count));
 			CrudRequest deleteRequest = create_crud_request( crud_file_table[fd].object_id, CRUD_DELETE, 
 					crud_file_table[fd].length, 0, 0 );
-			CrudResponse deleteResponse = crud_bus_request( deleteRequest, NULL );
+			CrudResponse deleteResponse = crud_client_operation( deleteRequest, NULL );
 
 			struct GenResponse deleteResponseExtract;
 
@@ -406,7 +406,7 @@ int32_t crud_write(int16_t fd, void *buf, int32_t count) {
 				// Create CRUD_CREATE request
 				CrudRequest createRequest = create_crud_request( 0, CRUD_CREATE,
 						(count + crud_file_table[fd].position), 0, 0 );
-				CrudResponse createResponse = crud_bus_request( createRequest, tempBuffer );
+				CrudResponse createResponse = crud_client_operation( createRequest, tempBuffer );
 
 				struct GenResponse createResponseExtract;
 
@@ -470,14 +470,14 @@ int32_t crud_seek(int16_t fd, uint32_t loc) {
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Function	: create_crud_request
-// Description	: Create a CrudRequest based on inputs to be used in crud_bus_request
+// Description	: Create a CrudRequest based on inputs to be used in crud_client_operation
 //
 // Inputs	: OID - objectID of the file in object store (if applicable)
 // 		  req - request type, ie CRUD_INIT
 // 		  length - length of the input (if applicable)
 // 		  flag - not used
 // 		  result - not used
-// Outputs	: int64_t in the form of a CrudRequest to be used in crud_bus_request
+// Outputs	: int64_t in the form of a CrudRequest to be used in crud_client_operation
 
 CrudRequest create_crud_request( int32_t OID, int req, int32_t length, int flag, int result ) {
 	int64_t request = 0; // Instantialize int64_t to hold values
@@ -681,7 +681,7 @@ int crudIOUnitTest(void) {
 
 		// Make a fake request to get file handle, then check it
 		request = construct_crud_request(crud_file_table[0].object_id, CRUD_READ, CRUD_MAX_OBJECT_SIZE, CRUD_NULL_FLAG, 0);
-		response = crud_bus_request(request, tbuf);
+		response = crud_client_operation(request, tbuf);
 		if ((deconstruct_crud_request(response, &oid, &req, &length, &flags, &res) != 0) || (res != 0))  {
 			logMessage(LOG_ERROR_LEVEL, "Read failure, bad CRUD response [%x]", response);
 			return(-1);

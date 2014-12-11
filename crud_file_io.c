@@ -16,6 +16,7 @@
 #include <crud_file_io.h>
 #include <cmpsc311_log.h>
 #include <cmpsc311_util.h>
+#include <crud_network.h>
 
 // Defines
 #define CIO_UNIT_TEST_MAX_WRITE_SIZE 1024

@@ -94,20 +94,14 @@ void my_cruddy_send(CrudRequest req, char *buf){
 	write(socket_fd, &netReq, sizeof(netReq));
 
 	// Compare request to current request type and send buffer if necessary
-	if (request == CRUD_CREATE){
+	if (request == CRUD_CREATE || request == CRUD_UPDATE){
 		// Send the buffer, use loop to ensure entire buf is sent
 		int bufCount = 0;
 		do {
-			int retBuf = write(socket_fd, &buf[bufCount], length-bufCount);
+			int retBuf = write(socket_fd, &buf[bufCount], length - bufCount);
 			bufCount = bufCount + retBuf;
 		} while (bufCount != length);
-	} else if (request == CRUD_UPDATE){
-		// Send the buffer, use loop to ensure entire buf is sent
-		int bufCount = 0;
-		do {
-			int retBuf = write(socket_fd, &buf[bufCount], length-bufCount);
-			bufCount = bufCount + retBuf;
-		} while(bufCount != length);
+
 	}
 }
 

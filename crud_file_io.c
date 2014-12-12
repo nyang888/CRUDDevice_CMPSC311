@@ -392,7 +392,7 @@ int32_t crud_write(int16_t fd, void *buf, int32_t count) {
 			// Create CRUD_DELETE request
 			memcpy(tempBuffer, readBuffer, (crud_file_table[fd].position + count));
 			CrudRequest deleteRequest = create_crud_request( crud_file_table[fd].object_id, CRUD_DELETE, 
-					crud_file_table[fd].length, 0, 0 );
+					0, 0, 0 );
 			CrudResponse deleteResponse = crud_client_operation( deleteRequest, NULL );
 
 			struct GenResponse deleteResponseExtract;
